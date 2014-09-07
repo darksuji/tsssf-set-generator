@@ -1,4 +1,82 @@
 #!/usr/bin/env perl
+use MooseX::Declare;
+use Moose::Util::TypeConstraints;
+
+BEGIN {
+    subtype 'TSSSF::SetName',
+        as 'Str', where { /^[-a-zA-Z0-1]+$/ };
+}
+
+class TSSSF::Set {
+    use Moose::Util::TypeConstraints;
+    use File::Slurp qw/read_file/;
+
+    has 'name' => (
+        isa => 'TSSSF::SetName', is => 'ro', required => 1,
+    );
+    has 'cards' => (
+        isa => 'ArrayRef[TSSSF::Card]', is => 'ro', required => 1,
+        traits => ['Array'],
+    );
+
+    method load ($class: TSSSF::SetName $name) {
+        my $filename = "data/$name.pon";
+        return $class->parse($name, scalar read_file($filename));
+    }
+
+    method parse ($class: TSSSF::SetName $name, Str $str) {
+        my @cards = map {
+            TSSSF::Card->parse($_)
+        } split /[\r\n]+/, $str;
+
+        return $class->new(
+            name    => $name,
+            cards   => \@cards,
+        );
+    }
+}
+
+subtype 'TSSSF::CardName',
+    as 'Str', where { $_ !~ /\`/ };
+
+class TSSSF::Card {
+    has 'name' => (
+        isa => 'TSSSF::CardName', is => 'ro', required => 1,
+    );
+    has 'string_rep' => (
+        isa => 'Str', is => 'ro', required => 1,
+    ),
+
+    method parse ($class: Str $str) {
+        my (
+            undef, undef, undef, $name
+        ) = split /\`/, $str;
+
+        return $class->parse_special($str) unless defined $name;
+
+        return $class->new(
+            name        => $name,
+            string_rep  => $str,
+        );
+    }
+
+    # some cards violate the file format and have to be constructed especially
+    method parse_special ($class: Str $str) {
+        if ($str eq 'Card`Card - Derpy Hooves.png`') {
+            return $class->new(
+                name        => 'Derpy Hooves',
+                string_rep  => $str,
+            );
+        } else {
+            die "Unknown card $str!";
+        }
+    }
+
+    method as_string () {
+        return $self->string_rep;
+    }
+}
+
 use Mojolicious::Lite;
 
 # Documentation browser under "/perldoc"
@@ -6,6 +84,9 @@ plugin 'PODRenderer';
 
 get '/' => sub {
   my $self = shift;
+
+  my $card_set = TSSSF::Set->load('cards'); # FIXME: hard-coded and badly named
+
   $self->render('index');
 };
 

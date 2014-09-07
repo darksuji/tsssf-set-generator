@@ -8,7 +8,6 @@ BEGIN {
 }
 
 class TSSSF::Set {
-    use Moose::Util::TypeConstraints;
     use File::Slurp qw/read_file/;
 
     has 'name' => (
@@ -17,6 +16,7 @@ class TSSSF::Set {
     has 'cards' => (
         isa => 'ArrayRef[TSSSF::Card]', is => 'ro', required => 1,
         traits => ['Array'],
+        handles => { all_cards => 'elements' },
     );
 
     method load ($class: TSSSF::SetName $name) {
@@ -32,6 +32,12 @@ class TSSSF::Set {
         return $class->new(
             name    => $name,
             cards   => \@cards,
+        );
+    }
+
+    method as_string () {
+        return join(
+            "\n", map { $_->as_string } $self->all_cards,
         );
     }
 }
@@ -86,6 +92,7 @@ get '/' => sub {
   my $self = shift;
 
   my $card_set = TSSSF::Set->load('cards'); # FIXME: hard-coded and badly named
+  die $card_set->as_string;
 
   $self->render('index');
 };

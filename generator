@@ -16,7 +16,10 @@ class TSSSF::Set {
     has 'cards' => (
         isa => 'ArrayRef[TSSSF::Card]', is => 'ro', required => 1,
         traits => ['Array'],
-        handles => { all_cards => 'elements' },
+        handles => {
+            all_cards       => 'elements',
+            filter_cards    => 'grep',
+        },
     );
 
     method load ($class: TSSSF::SetName $name) {
@@ -30,6 +33,22 @@ class TSSSF::Set {
         } split /[\r\n]+/, $str;
 
         return $class->new(
+            name    => $name,
+            cards   => \@cards,
+        );
+    }
+
+    method pick_subset (TSSSF::SetName $name, @card_names) {
+        use List::Util qw/first/;
+
+        my @cards = $self->filter_cards(
+            sub {
+                my $card = $_;
+                return first { $card->name eq $_ } @card_names;
+            }
+        );
+
+        return $self->new(
             name    => $name,
             cards   => \@cards,
         );
@@ -60,10 +79,15 @@ class TSSSF::Card {
 
         return $class->parse_special($str) unless defined $name;
 
+        $name = $class->_encode_name($name);
         return $class->new(
             name        => $name,
             string_rep  => $str,
         );
+    }
+
+    method _encode_name ($class: Str $name) {
+        return $name =~ s/\\n/ /r;
     }
 
     # some cards violate the file format and have to be constructed especially
@@ -85,16 +109,29 @@ class TSSSF::Card {
 
 use Mojolicious::Lite;
 
-# Documentation browser under "/perldoc"
-plugin 'PODRenderer';
-
 get '/' => sub {
-  my $self = shift;
+    my ($c) = @_;
 
-  my $card_set = TSSSF::Set->load('cards'); # FIXME: hard-coded and badly named
-  die $card_set->as_string;
+    my $card_set = TSSSF::Set->load('cards'); # FIXME: hard-coded and badly named
+    $c->stash(card_names => [
+        map { $_->name } $card_set->all_cards
+    ]);
 
-  $self->render('index');
+    $c->render('index');
+};
+
+post '/' => sub {
+    my ($c) = @_;
+
+    my $test = $c->param('sentience');
+    die "Begone, non-sentient!" unless $test eq 'Pixel Prism';
+
+    my @cards = $c->param('cards');
+    my $card_set = TSSSF::Set->load('cards'); # FIXME: hard-coded and badly named
+    my $subset = $card_set->pick_subset('output', @cards);
+
+    $c->stash(subset_string => $subset->as_string);
+    $c->render(inline => '<%= $subset_string %>');
 };
 
 app->start;
@@ -102,8 +139,17 @@ __DATA__
 
 @@ index.html.ep
 % layout 'default';
-% title 'Welcome';
-Welcome to the Mojolicious real-time web framework!
+% title 'TSSSF Set Builder';
+<form method="POST">
+<ul>
+% for my $name (@$card_names) {
+    <li><input type="checkbox" name="cards" value="<%= $name %>"><%= $name %></li>
+% }
+</ul>
+<label for="sentience test">Sentience test:  Who is best rainbow-puking dragicorn?</label>\
+<input type="text" name="sentience" id="sentience test" size="20" value="">
+<input type="submit">
+</form>
 
 @@ layouts/default.html.ep
 <!DOCTYPE html>

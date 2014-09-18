@@ -1,0 +1,6 @@
+[submodule "resources"]
+	path = resources
+	url = git@github.com:HorriblePeople/TSSSFTemplates.git
+[submodule "tsssf-game-gen"]
+	path = tsssf-game-gen
+	url = git@github.com:darksuji/tsssf-game-gen.git

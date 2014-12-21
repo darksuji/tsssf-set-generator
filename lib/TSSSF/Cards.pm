@@ -8,6 +8,7 @@ class TSSSF::Cards::StartCard {
     has Str $.filename;
     has TSSSF::Cards::Gender $.gender;
     has TSSSF::Cards::Race $.race;
+    has Str $.name;
 
     method is-male() {
         return so (TSSSF::Cards::Gender::Male, TSSSF::Cards::Gender::MaleFemale).grep($.gender);
@@ -25,16 +26,23 @@ grammar TSSSF::Cards::Grammar {
         <filename> \`
         <gender> \!
         <race> \`
+        <name> \`
         .*
     }
     token filename {
-        <- [`]>+
+        <non-grave-accent>+
+    }
+    token non-grave-accent {
+        <- [`] >
     }
     token gender {
         Male || Female || malefemale
     }
     token race {
         Unicorn
+    }
+    token name {
+        <non-grave-accent>+
     }
 }
 
@@ -47,9 +55,10 @@ class TSSSF::Cards::Actions {
     }
     method card($/) {
         make TSSSF::Cards::StartCard.new(
-            filename    => $<filename>.Str,
+            filename    => ~$<filename>,
             gender      => $<gender>.ast,
             race        => $<race>.ast,
+            name        => ~$<name>,
         );
     }
     method gender($/) {

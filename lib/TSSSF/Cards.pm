@@ -9,6 +9,9 @@ class TSSSF::Cards::StartCard {
     has TSSSF::Cards::Gender $.gender;
     has TSSSF::Cards::Race $.race;
     has Str $.name;
+    has Str @.keywords;
+    has Str $.rules-text;
+    has Str $.flavor-text;
 
     method is-male() {
         return so (TSSSF::Cards::Gender::Male, TSSSF::Cards::Gender::MaleFemale).grep($.gender);
@@ -27,7 +30,9 @@ grammar TSSSF::Cards::Grammar {
         <gender> \!
         <race> \`
         <name> \`
-        .*
+        <keywords> \`
+        <rules-text> \`
+        <flavor-text> \`
     }
     token filename {
         <non-grave-accent>+
@@ -42,6 +47,18 @@ grammar TSSSF::Cards::Grammar {
         Unicorn
     }
     token name {
+        <non-grave-accent>+
+    }
+    token keywords {
+        [ [ <keyword>\,\s* ]* <keyword> ]?
+    }
+    token keyword {
+        <- [`,] >+
+    }
+    token rules-text {
+        <non-grave-accent>+
+    }
+    token flavor-text {
         <non-grave-accent>+
     }
 }
@@ -59,6 +76,9 @@ class TSSSF::Cards::Actions {
             gender      => $<gender>.ast,
             race        => $<race>.ast,
             name        => ~$<name>,
+            keywords    => $<keywords>.ast,
+            rules-text  => ~$<rules-text>,
+            flavor-text => ~$<flavor-text>,
         );
     }
     method gender($/) {
@@ -73,6 +93,9 @@ class TSSSF::Cards::Actions {
     }
     method race($/) {
         make TSSSF::Cards::Race::Unicorn;
+    }
+    method keywords($/) {
+        make $<keyword>».Str;
     }
 }
 

@@ -8,11 +8,11 @@ my %tests = (
         my $filename = '00 START.png';
         my $gender = 'Female';
         my $race = 'Unicorn';
-        my $name = 'Fanfic Author Twilight';
-        my @keywords = ('Mane 6', 'Twilight Sparkle');
+        my $name = 'Perfectly Generic Start Card';
+        my @keywords = ('Object', 'Cube');
         my $keywordstr = @keywords.join(', ');
-        my $rules-text = q{Place this card in the center of the table at the start of the game.\nThis card cannot be moved or removed from the grid. This power can't be copied.};
-        my $flavor-text = q{She was no writer. She was a prophet. Her words spanned the universes, sang hymns to the terrible improbability of life and love. She was like unto a god, Twilight was.\n- Element of Magic: An Autobiography};
+        my $rules-text = q{If you don't know what to do with a start card,\nlook up the rules.};
+        my $flavor-text = q{This\nis not\na real\ncard.};
 
         my $contents = qq{START`$filename`$gender!$race`$name`$keywordstr`$rules-text`$flavor-text`};
 

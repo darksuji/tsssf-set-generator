@@ -2,10 +2,12 @@ use v6;
 module TSSSF::Cards;
 
 my enum TSSSF::Cards::Gender <Male Female MaleFemale>;
+my enum TSSSF::Cards::Race <Unicorn>;
 
 class TSSSF::Cards::StartCard {
     has Str $.filename;
     has TSSSF::Cards::Gender $.gender;
+    has TSSSF::Cards::Race $.race;
 
     method is-male() {
         return so (TSSSF::Cards::Gender::Male, TSSSF::Cards::Gender::MaleFemale).grep($.gender);
@@ -22,6 +24,7 @@ grammar TSSSF::Cards::Grammar {
         START \`
         <filename> \`
         <gender> \!
+        <race> \`
         .*
     }
     token filename {
@@ -29,6 +32,9 @@ grammar TSSSF::Cards::Grammar {
     }
     token gender {
         Male || Female || malefemale
+    }
+    token race {
+        Unicorn
     }
 }
 
@@ -43,6 +49,7 @@ class TSSSF::Cards::Actions {
         make TSSSF::Cards::StartCard.new(
             filename    => $<filename>.Str,
             gender      => $<gender>.ast,
+            race        => $<race>.ast,
         );
     }
     method gender($/) {
@@ -54,6 +61,9 @@ class TSSSF::Cards::Actions {
             malefemale  => TSSSF::Cards::Gender::MaleFemale,
         );
         make %map{$/};
+    }
+    method race($/) {
+        make TSSSF::Cards::Race::Unicorn;
     }
 }
 

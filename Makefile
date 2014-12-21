@@ -1,2 +1,2 @@
 test:
-	PERL6LIB="lib" prove --failures --exec perl6
+	PERL6LIB="lib" prove --failures -v --exec perl6

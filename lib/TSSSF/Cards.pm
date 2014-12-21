@@ -1,6 +1,7 @@
 use v6;
 module TSSSF::Cards;
 
+my enum TSSSF::Cards::Type <Start Pony>;
 my enum TSSSF::Cards::Gender <Male Female MaleFemale>;
 my enum TSSSF::Cards::Race <Unicorn>;
 
@@ -21,11 +22,14 @@ class TSSSF::Cards::StartCard {
     }
 }
 
+class TSSSF::Cards::PonyCard {
+}
+
 grammar TSSSF::Cards::Grammar {
     token TOP { [ <line> \n? ]+ }
     token line { ^^ <card> $$ }
     token card {
-        START \`
+        <type> \`
         <filename> \`
         <gender> \!
         <race> \`
@@ -33,6 +37,9 @@ grammar TSSSF::Cards::Grammar {
         <keywords> \`
         <rules-text> \`
         <flavor-text> \`
+    }
+    token type {
+        START || Pony
     }
     token filename {
         <non-grave-accent>+
@@ -71,7 +78,7 @@ class TSSSF::Cards::Actions {
         make $<card>.ast;
     }
     method card($/) {
-        make TSSSF::Cards::StartCard.new(
+        my %args = (
             filename    => ~$<filename>,
             gender      => $<gender>.ast,
             race        => $<race>.ast,
@@ -80,6 +87,20 @@ class TSSSF::Cards::Actions {
             rules-text  => ~$<rules-text>,
             flavor-text => ~$<flavor-text>,
         );
+        if ($<type>.ast ~~ TSSSF::Cards::Type::Start) {
+            make TSSSF::Cards::StartCard.new(|%args);
+        } else {
+            make TSSSF::Cards::PonyCard.new(|%args);
+        }
+    }
+    method type($/) {
+        # FIXME:  enum coercion is broken in perl6.
+        # Once it's fixed, replace this lookup with the simpler mechanism.
+        my %map = (
+            START   => TSSSF::Cards::Type::Start,
+            Pony    => TSSSF::Cards::Type::Pony,
+        );
+        make %map{$/};
     }
     method gender($/) {
         # FIXME:  enum coercion is broken in perl6.

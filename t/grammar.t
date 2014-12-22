@@ -3,40 +3,58 @@ use Test;
 
 use TSSSF::Cards;
 
+my %pony-card-stats = (
+    filename    => '00 START.png',
+    gender      => 'Female',
+    race        => 'Unicorn',
+    name        => 'Perfectly Generic Start Card',
+    keywords    => ('Object', 'Cube'),
+    rules-text  => q{If you don't know what to do with a start card,\nlook up the rules.},
+    flavor-text => q{This\nis not\na real\ncard.},
+);
+
+sub _make_pony_card_string(
+    Str :$typestr
+) {
+    my $kindstr = %pony-card-stats<gender race>.join('!');
+    my $keywordstr = %pony-card-stats<keywords>.join(', ');
+
+    return sprintf(
+        qq{%s`%s`%s`%s`%s`%s`%s`\n},
+        $typestr, %pony-card-stats<filename>, $kindstr,
+        %pony-card-stats<name>, $keywordstr,
+        %pony-card-stats<rules-text flavor-text>
+    );
+}
+
+sub _fetch-attribute-by-name (Any $obj, Str $name) {
+    return $obj.^can($name)[0]($obj);
+}
+
+sub _parse-card-file (Str $contents) {
+    my $match = TSSSF::Cards::Grammar.parse($contents, :actions(TSSSF::Cards::Actions.new()) );
+    ok $match, 'matched successfully';
+    return $match.ast.flat;
+}
+
 my %tests = (
-    parses_start_card_file  => sub {
-        my $filename = '00 START.png';
-        my $gender = 'Female';
-        my $race = 'Unicorn';
-        my $name = 'Perfectly Generic Start Card';
-        my @keywords = ('Object', 'Cube');
-        my $keywordstr = @keywords.join(', ');
-        my $rules-text = q{If you don't know what to do with a start card,\nlook up the rules.};
-        my $flavor-text = q{This\nis not\na real\ncard.};
+    parses-start-card-file  => sub {
+        my $contents = _make_pony_card_string(typestr => 'START');
 
-        my $contents = qq{START`$filename`$gender!$race`$name`$keywordstr`$rules-text`$flavor-text`};
-
-        my $match = TSSSF::Cards::Grammar.parse($contents, :actions(TSSSF::Cards::Actions.new()) );
-        ok $match, 'matched successfully';
-        my ($card) = $match.ast.flat;
+        my ($card) = _parse-card-file($contents);
         cmp_ok $card, '~~', TSSSF::Cards::StartCard, 'object is right type';
-        is $card.filename, $filename, 'extracted file name';
-        is $card.gender, $gender, 'extracted gender';
-        ok $card.is-female, 'correctly interpreted gender';
-        is $card.race, $race, 'extracted race';
-        is $card.name, $name, 'extracted name';
-        is $card.keywords, @keywords, 'extracted keywords';
-        is $card.rules-text, $rules-text, 'extracted rules text';
-        is $card.flavor-text, $flavor-text, 'extracted flavor text';
+        for %pony-card-stats.keys -> $attr {
+            is _fetch-attribute-by-name($card, $attr), %pony-card-stats{$attr}, "extracted $attr";
+        }
     },
-    parses_pony_card_file   => sub {
-        my $contents = q
-        {Pony`Pony - Star Student Twilight Sparkle.png`Female!Unicorn`Star Student Twilight`Mane 6, Twilight Sparkle`Aced The Final: You may search the Ship or Pony discard pile for a card of your choice and play it.`"W-what? This cannot be!" Trixie stood aghast over the masterful masterpieces Twilight had laid out in runic scrawl on her desk, "Nopony could solve The Last Riddle! And in such an elegant way... It's IMPOSSIBLE!"\n- Element of Magic: An Autobiography`};
+    parses-pony-card-file   => sub {
+        my $contents = _make_pony_card_string(typestr => 'Pony');
 
-        my $match = TSSSF::Cards::Grammar.parse($contents, :actions(TSSSF::Cards::Actions.new()) );
-        ok $match, 'matched successfully';
-        my ($card) = $match.ast.flat;
+        my ($card) = _parse-card-file($contents);
         cmp_ok $card, '~~', TSSSF::Cards::PonyCard, 'object is right type';
+        for %pony-card-stats.keys -> $attr {
+            is _fetch-attribute-by-name($card, $attr), %pony-card-stats{$attr}, "extracted $attr";
+        }
     },
 );
 
@@ -46,3 +64,4 @@ for %tests.kv -> $name, $test {
 }
 
 done;
+# vim: set ft=perl6

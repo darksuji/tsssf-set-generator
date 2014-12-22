@@ -5,7 +5,7 @@ my enum TSSSF::Cards::Type <Start Pony>;
 my enum TSSSF::Cards::Gender <Male Female MaleFemale>;
 my enum TSSSF::Cards::Race <Unicorn>;
 
-class TSSSF::Cards::StartCard {
+class TSSSF::Cards::PonyCard {
     has Str $.filename;
     has TSSSF::Cards::Gender $.gender;
     has TSSSF::Cards::Race $.race;
@@ -22,14 +22,16 @@ class TSSSF::Cards::StartCard {
     }
 }
 
-class TSSSF::Cards::PonyCard {
+class TSSSF::Cards::StartCard is TSSSF::Cards::PonyCard {
 }
 
 grammar TSSSF::Cards::Grammar {
     token TOP { [ <line> \n? ]+ }
     token line { ^^ <card> $$ }
-    token card {
-        <type> \`
+    token card { <start-card> || <pony-card> }
+    token start-card { START \` <pony-card-body> }
+    token pony-card { Pony \` <pony-card-body> }
+    token pony-card-body {
         <filename> \`
         <gender> \!
         <race> \`
@@ -37,9 +39,6 @@ grammar TSSSF::Cards::Grammar {
         <keywords> \`
         <rules-text> \`
         <flavor-text> \`
-    }
-    token type {
-        START || Pony
     }
     token filename {
         <non-grave-accent>+
@@ -78,6 +77,22 @@ class TSSSF::Cards::Actions {
         make $<card>.ast;
     }
     method card($/) {
+#        make .ast if .defined for $<start-card>, $<pony-card>;
+#        make (grep { .defined }, ($<start-card>, $<pony-card>))».ast;
+#        make ([//] ($<start-card>, $<pony-card>) ).ast;
+        make (first { .defined }, ($<start-card>, $<pony-card>)).ast;
+    }
+    method start-card($/) {
+        make TSSSF::Cards::StartCard.new(
+            |$<pony-card-body>.ast
+        );
+    }
+    method pony-card($/) {
+        make TSSSF::Cards::PonyCard.new(
+            |$<pony-card-body>.ast
+        );
+    }
+    method pony-card-body($/) {
         my %args = (
             filename    => ~$<filename>,
             gender      => $<gender>.ast,
@@ -87,11 +102,7 @@ class TSSSF::Cards::Actions {
             rules-text  => ~$<rules-text>,
             flavor-text => ~$<flavor-text>,
         );
-        if ($<type>.ast ~~ TSSSF::Cards::Type::Start) {
-            make TSSSF::Cards::StartCard.new(|%args);
-        } else {
-            make TSSSF::Cards::PonyCard.new(|%args);
-        }
+        make %args;
     }
     method type($/) {
         # FIXME:  enum coercion is broken in perl6.
@@ -119,4 +130,4 @@ class TSSSF::Cards::Actions {
         make $<keyword>».Str;
     }
 }
-
+# vim: set ft=perl6

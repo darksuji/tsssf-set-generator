@@ -1,7 +1,6 @@
 use v6;
 module TSSSF::Cards;
 
-my enum TSSSF::Cards::Type <Start Pony>;
 my enum TSSSF::Cards::Gender <Male Female MaleFemale>;
 my enum TSSSF::Cards::Race <Unicorn>;
 
@@ -90,7 +89,7 @@ class TSSSF::Cards::Actions {
         );
     }
     method pony-card-body($/) {
-        my %args = (
+        make {
             filename    => ~$<filename>,
             gender      => $<gender>.ast,
             race        => $<race>.ast,
@@ -98,17 +97,7 @@ class TSSSF::Cards::Actions {
             keywords    => $<keywords>.ast,
             rules-text  => ~$<rules-text>,
             flavor-text => ~$<flavor-text>,
-        );
-        make %args;
-    }
-    method type($/) {
-        # FIXME:  enum coercion is broken in perl6.
-        # Once it's fixed, replace this lookup with the simpler mechanism.
-        my %map = (
-            START   => TSSSF::Cards::Type::Start,
-            Pony    => TSSSF::Cards::Type::Pony,
-        );
-        make %map{$/};
+        };
     }
     method gender($/) {
         # FIXME:  enum coercion is broken in perl6.

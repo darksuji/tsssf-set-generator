@@ -28,7 +28,7 @@ class TSSSF::Cards::StartCard is TSSSF::Cards::PonyCard {
 grammar TSSSF::Cards::Grammar {
     token TOP { [ <line> \n? ]+ }
     token line { ^^ <card> $$ }
-    token card { <start-card> || <pony-card> }
+    token card { <start-card> | <pony-card> }
     token start-card { START \` <pony-card-body> }
     token pony-card { Pony \` <pony-card-body> }
     token pony-card-body {
@@ -47,7 +47,7 @@ grammar TSSSF::Cards::Grammar {
         <- [`] >
     }
     token gender {
-        Male || Female || malefemale
+        Male | Female | malefemale
     }
     token race {
         Unicorn
@@ -77,9 +77,6 @@ class TSSSF::Cards::Actions {
         make $<card>.ast;
     }
     method card($/) {
-#        make .ast if .defined for $<start-card>, $<pony-card>;
-#        make (grep { .defined }, ($<start-card>, $<pony-card>))».ast;
-#        make ([//] ($<start-card>, $<pony-card>) ).ast;
         make (first { .defined }, ($<start-card>, $<pony-card>)).ast;
     }
     method start-card($/) {

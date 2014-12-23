@@ -4,6 +4,7 @@ use Test;
 use TSSSF::Cards;
 
 my %PONY-CARD-SPEC = (
+    type        => 'Pony',
     filename    => '00 START.png',
     gender      => 'Female',
     race        => 'Unicorn',
@@ -17,6 +18,7 @@ my %PONY-CARD-SPEC = (
 # format.
 sub _make_pony_card_string(Str :$typestr, *%pony-card-spec) {
     my %spec = (%PONY-CARD-SPEC, %pony-card-spec);
+    %spec<type> = 'START' if %spec<type> eq 'Start';
     %spec<gender> = 'malefemale' if %spec<gender> eq 'MaleFemale';
     %spec<race> = 'earth pony' if %spec<race> eq 'EarthPony';
     %spec<kind> = (
@@ -27,7 +29,7 @@ sub _make_pony_card_string(Str :$typestr, *%pony-card-spec) {
 
     return sprintf(
         qq{%s`%s`%s`%s`%s`%s`%s`\n},
-        $typestr, %spec<filename kind name keyword-list rules-text flavor-text>
+        %spec<type filename kind name keyword-list rules-text flavor-text>
     );
 }
 
@@ -45,18 +47,21 @@ sub _parse-card-file (Str $contents) {
 }
 
 my %tests = (
-    parses-start-card-file  => sub {
-        my $contents = _make_pony_card_string(typestr => 'START');
+    parses-generic-card-file   => sub {
+        my $filename = 'Card - Derpy Hooves.png';
+        my $contents = "Card`$filename`\n";
 
         my ($card) = _parse-card-file($contents);
-        cmp_ok $card, '~~', TSSSF::Cards::StartCard, 'object is right type';
-        for %PONY-CARD-SPEC.keys -> $attr {
-            is _fetch-attribute-by-name($card, $attr), %PONY-CARD-SPEC{$attr}, "extracted $attr";
-        }
+
+        cmp_ok $card, '~~', TSSSF::Cards::Card, "Derpy is right type";
+        is $card.filename, $filename, '... extracted filename';
     },
     parses-pony-card-file   => sub {
         my %card-specs = (
-            'default' => %PONY-CARD-SPEC,
+            'default' => { %PONY-CARD-SPEC },
+            'start' => {
+                type => 'Start',
+            },
             'male dystopian earth pony' => {
                 race => 'EarthPony', gender => 'Male', dystopian => True,
             },
@@ -69,12 +74,19 @@ my %tests = (
         );
 
         for %card-specs.kv -> $name, %spec {
-            my $contents = _make_pony_card_string(
-                typestr => 'Pony', |%PONY-CARD-SPEC, |%spec
-            );
+            my %full-spec = (%PONY-CARD-SPEC, %spec);
+            my $contents = _make_pony_card_string(|%full-spec);
 
             my ($card) = _parse-card-file($contents);
-            cmp_ok $card, '~~', TSSSF::Cards::PonyCard, "$name object is right type";
+            if %full-spec<type> eq 'Pony' {
+                cmp_ok $card, '~~', TSSSF::Cards::PonyCard, "$name object is right type";
+            } elsif %full-spec<type> eq 'Start' {
+                cmp_ok $card, '~~', TSSSF::Cards::StartCard, "$name object is right type";
+            } else {
+                die "Unrecognized card type %full-spec<type>";
+            }
+            %spec<type>:delete;
+
             for %spec.keys -> $attr {
                 is _fetch-attribute-by-name($card, $attr), %spec{$attr}, "... extracted $attr";
             }

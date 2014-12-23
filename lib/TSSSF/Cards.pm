@@ -4,8 +4,11 @@ module TSSSF::Cards;
 my enum TSSSF::Cards::Gender <Male Female MaleFemale>;
 my enum TSSSF::Cards::Race <Unicorn Pegasus EarthPony Alicorn>;
 
-class TSSSF::Cards::PonyCard {
+class TSSSF::Cards::Card {
     has Str $.filename;
+}
+
+class TSSSF::Cards::PonyCard is TSSSF::Cards::Card {
     has TSSSF::Cards::Gender $.gender;
     has TSSSF::Cards::Race $.race;
     has Bool $.dystopian;
@@ -28,9 +31,13 @@ class TSSSF::Cards::StartCard is TSSSF::Cards::PonyCard {
 grammar TSSSF::Cards::Grammar {
     token TOP { [ <line> \n? ]+ }
     token line { ^^ <card> $$ }
-    token card { <start-card> | <pony-card> }
-    token start-card { START \` <pony-card-body> }
+    token card { <generic-card> | <start-card> | <pony-card> }
+    token generic-card { Card \` <generic-card-body> }
     token pony-card { Pony \` <pony-card-body> }
+    token start-card { START \` <pony-card-body> }
+    token generic-card-body {
+        <filename> \`
+    }
     token pony-card-body {
         <filename> \`
         <gender> \!
@@ -48,10 +55,10 @@ grammar TSSSF::Cards::Grammar {
         <- [`] >
     }
     token gender {
-        Male | Female | malefemale
+        :i Male | Female | MaleFemale
     }
     token race {
-        Unicorn | Pegasus | earth' 'pony | Alicorn
+        :i Unicorn | Pegasus | Earth' 'Pony | Alicorn
     }
     token dystopian-flag {
         \! Dystopian
@@ -82,12 +89,17 @@ class TSSSF::Cards::Actions {
         make $<card>.ast;
     }
     method card($/) {
-        make ([//] $<start-card>, $<pony-card>).ast;
+        make ([//] $<generic-card>, $<pony-card>, $<start-card>).ast;
     }
-    method start-card($/) {
-        make TSSSF::Cards::StartCard.new(
-            |$<pony-card-body>.ast
+    method generic-card($/) {
+        make TSSSF::Cards::Card.new(
+            |$<generic-card-body>.ast
         );
+    }
+    method generic-card-body($/) {
+        make {
+            filename    => ~$<filename>,
+        };
     }
     method pony-card($/) {
         make TSSSF::Cards::PonyCard.new(
@@ -106,26 +118,31 @@ class TSSSF::Cards::Actions {
             flavor-text => ~$<flavor-text>,
         };
     }
+    method start-card($/) {
+        make TSSSF::Cards::StartCard.new(
+            |$<pony-card-body>.ast
+        );
+    }
     method gender($/) {
         # FIXME:  enum coercion is broken in perl6.
         # Once it's fixed, replace this lookup with the simpler mechanism.
         my %map = (
-            Male        => TSSSF::Cards::Gender::Male,
-            Female      => TSSSF::Cards::Gender::Female,
+            male        => TSSSF::Cards::Gender::Male,
+            female      => TSSSF::Cards::Gender::Female,
             malefemale  => TSSSF::Cards::Gender::MaleFemale,
         );
-        make %map{$/};
+        make %map{lc $/};
     }
     method race($/) {
         # FIXME:  enum coercion is broken in perl6.
         # Once it's fixed, replace this lookup with the simpler mechanism.
         my %map = (
-            Unicorn         => TSSSF::Cards::Race::Unicorn,
-            Pegasus         => TSSSF::Cards::Race::Pegasus,
+            unicorn         => TSSSF::Cards::Race::Unicorn,
+            pegasus         => TSSSF::Cards::Race::Pegasus,
             'earth pony'    => TSSSF::Cards::Race::EarthPony,
-            Alicorn         => TSSSF::Cards::Race::Alicorn,
+            alicorn         => TSSSF::Cards::Race::Alicorn,
         );
-        make %map{$/};
+        make %map{lc $/};
     }
     method keywords($/) {
         make $<keyword>».Str;

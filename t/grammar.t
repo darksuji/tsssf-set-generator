@@ -3,7 +3,7 @@ use Test;
 
 use TSSSF::Cards;
 
-my %pony-card-stats = (
+my %PONY-CARD-SPEC = (
     filename    => '00 START.png',
     gender      => 'Female',
     race        => 'Unicorn',
@@ -16,17 +16,17 @@ my %pony-card-stats = (
 sub _make_pony_card_string(
     Str :$typestr
 ) {
-    my $kindstr = %pony-card-stats<gender race>.join('!');
-    my $keywordstr = %pony-card-stats<keywords>.join(', ');
+    my %pony-card-spec = %PONY-CARD-SPEC;
+    %pony-card-spec<kind> = (map { %pony-card-spec.delete($_) }, <gender race>).join('!');
+    %pony-card-spec<keyword-list> = %pony-card-spec.delete('keywords').join(', ');
 
     return sprintf(
         qq{%s`%s`%s`%s`%s`%s`%s`\n},
-        $typestr, %pony-card-stats<filename>, $kindstr,
-        %pony-card-stats<name>, $keywordstr,
-        %pony-card-stats<rules-text flavor-text>
+        $typestr, %pony-card-spec<filename kind name keyword-list rules-text flavor-text>
     );
 }
 
+# FIXME This is a completely hideous way of saying $obj.$name()
 sub _fetch-attribute-by-name (Any $obj, Str $name) {
     return $obj.^can($name)[0]($obj);
 }
@@ -43,8 +43,8 @@ my %tests = (
 
         my ($card) = _parse-card-file($contents);
         cmp_ok $card, '~~', TSSSF::Cards::StartCard, 'object is right type';
-        for %pony-card-stats.keys -> $attr {
-            is _fetch-attribute-by-name($card, $attr), %pony-card-stats{$attr}, "extracted $attr";
+        for %PONY-CARD-SPEC.keys -> $attr {
+            is _fetch-attribute-by-name($card, $attr), %PONY-CARD-SPEC{$attr}, "extracted $attr";
         }
     },
     parses-pony-card-file   => sub {
@@ -52,8 +52,8 @@ my %tests = (
 
         my ($card) = _parse-card-file($contents);
         cmp_ok $card, '~~', TSSSF::Cards::PonyCard, 'object is right type';
-        for %pony-card-stats.keys -> $attr {
-            is _fetch-attribute-by-name($card, $attr), %pony-card-stats{$attr}, "extracted $attr";
+        for %PONY-CARD-SPEC.keys -> $attr {
+            is _fetch-attribute-by-name($card, $attr), %PONY-CARD-SPEC{$attr}, "extracted $attr";
         }
     },
 );

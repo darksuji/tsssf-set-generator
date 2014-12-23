@@ -13,20 +13,21 @@ my %PONY-CARD-SPEC = (
     flavor-text => q{This\nis not\na real\ncard.},
 );
 
-sub _make_pony_card_string(
-    Str :$typestr,
-    *%spec
-) {
-    my %pony-card-spec = (%PONY-CARD-SPEC, %spec);
-    %pony-card-spec<kind> = (
-        %pony-card-spec<gender race>:delete,
-        %pony-card-spec<dystopian>:delete ?? 'Dystopian' !! ()
+# Translate from nice clean datatypes to the messy and inconsistent actual file
+# format.
+sub _make_pony_card_string(Str :$typestr, *%pony-card-spec) {
+    my %spec = (%PONY-CARD-SPEC, %pony-card-spec);
+    %spec<gender> = 'malefemale' if %spec<gender> eq 'MaleFemale';
+    %spec<race> = 'earth pony' if %spec<race> eq 'EarthPony';
+    %spec<kind> = (
+        %spec<gender race>:delete,
+        %spec<dystopian>:delete ?? 'Dystopian' !! ()
     ).join('!');
-    %pony-card-spec<keyword-list> = (%pony-card-spec<keywords>:delete).join(', ');
+    %spec<keyword-list> = (%spec<keywords>:delete).join(', ');
 
     return sprintf(
         qq{%s`%s`%s`%s`%s`%s`%s`\n},
-        $typestr, %pony-card-spec<filename kind name keyword-list rules-text flavor-text>
+        $typestr, %spec<filename kind name keyword-list rules-text flavor-text>
     );
 }
 
@@ -56,15 +57,20 @@ my %tests = (
     parses-pony-card-file   => sub {
         my %card-specs = (
             'default' => %PONY-CARD-SPEC,
-            'male dystopian pegasus' => {
-                %PONY-CARD-SPEC,
-                race => 'Pegasus', gender => 'Male', dystopian => True,
+            'male dystopian earth pony' => {
+                race => 'EarthPony', gender => 'Male', dystopian => True,
+            },
+            'male-and-female pegasus' => {
+                race => 'Pegasus', gender => 'MaleFemale',
+            },
+            'Celestia' => {
+                race => 'Alicorn', keywords => ('Celestia', 'Elder', 'Princess'),
             },
         );
 
         for %card-specs.kv -> $name, %spec {
             my $contents = _make_pony_card_string(
-                typestr => 'Pony', |%spec
+                typestr => 'Pony', |%PONY-CARD-SPEC, |%spec
             );
 
             my ($card) = _parse-card-file($contents);

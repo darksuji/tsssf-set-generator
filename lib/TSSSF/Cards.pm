@@ -2,7 +2,7 @@ use v6;
 module TSSSF::Cards;
 
 my enum TSSSF::Cards::Gender <Male Female MaleFemale>;
-my enum TSSSF::Cards::Race <Unicorn Pegasus>;
+my enum TSSSF::Cards::Race <Unicorn Pegasus EarthPony Alicorn>;
 
 class TSSSF::Cards::PonyCard {
     has Str $.filename;
@@ -51,7 +51,7 @@ grammar TSSSF::Cards::Grammar {
         Male | Female | malefemale
     }
     token race {
-        Unicorn | Pegasus
+        Unicorn | Pegasus | earth' 'pony | Alicorn
     }
     token dystopian-flag {
         \! Dystopian
@@ -120,8 +120,10 @@ class TSSSF::Cards::Actions {
         # FIXME:  enum coercion is broken in perl6.
         # Once it's fixed, replace this lookup with the simpler mechanism.
         my %map = (
-            Unicorn     => TSSSF::Cards::Race::Unicorn,
-            Pegasus     => TSSSF::Cards::Race::Pegasus,
+            Unicorn         => TSSSF::Cards::Race::Unicorn,
+            Pegasus         => TSSSF::Cards::Race::Pegasus,
+            'earth pony'    => TSSSF::Cards::Race::EarthPony,
+            Alicorn         => TSSSF::Cards::Race::Alicorn,
         );
         make %map{$/};
     }

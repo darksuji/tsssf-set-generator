@@ -17,8 +17,8 @@ sub _make_pony_card_string(
     Str :$typestr
 ) {
     my %pony-card-spec = %PONY-CARD-SPEC;
-    %pony-card-spec<kind> = (map { %pony-card-spec.delete($_) }, <gender race>).join('!');
-    %pony-card-spec<keyword-list> = %pony-card-spec.delete('keywords').join(', ');
+    %pony-card-spec<kind> = (%pony-card-spec<gender race>:delete).join('!');
+    %pony-card-spec<keyword-list> = (%pony-card-spec<keywords>:delete).join(', ');
 
     return sprintf(
         qq{%s`%s`%s`%s`%s`%s`%s`\n},

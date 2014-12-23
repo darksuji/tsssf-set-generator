@@ -76,7 +76,7 @@ class TSSSF::Cards::Actions {
         make $<card>.ast;
     }
     method card($/) {
-        make (first { .defined }, ($<start-card>, $<pony-card>)).ast;
+        make ([//] $<start-card>, $<pony-card>).ast;
     }
     method start-card($/) {
         make TSSSF::Cards::StartCard.new(

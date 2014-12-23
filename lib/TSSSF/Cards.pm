@@ -2,12 +2,13 @@ use v6;
 module TSSSF::Cards;
 
 my enum TSSSF::Cards::Gender <Male Female MaleFemale>;
-my enum TSSSF::Cards::Race <Unicorn>;
+my enum TSSSF::Cards::Race <Unicorn Pegasus>;
 
 class TSSSF::Cards::PonyCard {
     has Str $.filename;
     has TSSSF::Cards::Gender $.gender;
     has TSSSF::Cards::Race $.race;
+    has Bool $.dystopian;
     has Str $.name;
     has Str @.keywords;
     has Str $.rules-text;
@@ -33,7 +34,8 @@ grammar TSSSF::Cards::Grammar {
     token pony-card-body {
         <filename> \`
         <gender> \!
-        <race> \`
+        <race>
+        <dystopian-flag>? \`
         <name> \`
         <keywords> \`
         <rules-text> \`
@@ -49,8 +51,12 @@ grammar TSSSF::Cards::Grammar {
         Male | Female | malefemale
     }
     token race {
-        Unicorn
+        Unicorn | Pegasus
     }
+    token dystopian-flag {
+        \! Dystopian
+    }
+
     token name {
         <non-grave-accent>+
     }
@@ -93,6 +99,7 @@ class TSSSF::Cards::Actions {
             filename    => ~$<filename>,
             gender      => $<gender>.ast,
             race        => $<race>.ast,
+            dystopian   => $<dystopian-flag>.defined,
             name        => ~$<name>,
             keywords    => $<keywords>.ast,
             rules-text  => ~$<rules-text>,
@@ -110,7 +117,13 @@ class TSSSF::Cards::Actions {
         make %map{$/};
     }
     method race($/) {
-        make TSSSF::Cards::Race::Unicorn;
+        # FIXME:  enum coercion is broken in perl6.
+        # Once it's fixed, replace this lookup with the simpler mechanism.
+        my %map = (
+            Unicorn     => TSSSF::Cards::Race::Unicorn,
+            Pegasus     => TSSSF::Cards::Race::Pegasus,
+        );
+        make %map{$/};
     }
     method keywords($/) {
         make $<keyword>».Str;

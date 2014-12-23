@@ -14,10 +14,14 @@ my %PONY-CARD-SPEC = (
 );
 
 sub _make_pony_card_string(
-    Str :$typestr
+    Str :$typestr,
+    *%spec
 ) {
-    my %pony-card-spec = %PONY-CARD-SPEC;
-    %pony-card-spec<kind> = (%pony-card-spec<gender race>:delete).join('!');
+    my %pony-card-spec = (%PONY-CARD-SPEC, %spec);
+    %pony-card-spec<kind> = (
+        %pony-card-spec<gender race>:delete,
+        %pony-card-spec<dystopian>:delete ?? 'Dystopian' !! ()
+    ).join('!');
     %pony-card-spec<keyword-list> = (%pony-card-spec<keywords>:delete).join(', ');
 
     return sprintf(
@@ -28,12 +32,14 @@ sub _make_pony_card_string(
 
 # FIXME This is a completely hideous way of saying $obj.$name()
 sub _fetch-attribute-by-name (Any $obj, Str $name) {
-    return $obj.^can($name)[0]($obj);
+    my $sub = $obj.^can($name)[0];
+    die "No such method \>$name\<" unless $sub;
+    return $sub($obj);
 }
 
 sub _parse-card-file (Str $contents) {
     my $match = TSSSF::Cards::Grammar.parse($contents, :actions(TSSSF::Cards::Actions.new()) );
-    ok $match, 'matched successfully';
+    die 'Parse error' unless $match;
     return $match.ast.flat;
 }
 
@@ -48,12 +54,24 @@ my %tests = (
         }
     },
     parses-pony-card-file   => sub {
-        my $contents = _make_pony_card_string(typestr => 'Pony');
+        my %card-specs = (
+            'default' => %PONY-CARD-SPEC,
+            'male dystopian pegasus' => {
+                %PONY-CARD-SPEC,
+                race => 'Pegasus', gender => 'Male', dystopian => True,
+            },
+        );
 
-        my ($card) = _parse-card-file($contents);
-        cmp_ok $card, '~~', TSSSF::Cards::PonyCard, 'object is right type';
-        for %PONY-CARD-SPEC.keys -> $attr {
-            is _fetch-attribute-by-name($card, $attr), %PONY-CARD-SPEC{$attr}, "extracted $attr";
+        for %card-specs.kv -> $name, %spec {
+            my $contents = _make_pony_card_string(
+                typestr => 'Pony', |%spec
+            );
+
+            my ($card) = _parse-card-file($contents);
+            cmp_ok $card, '~~', TSSSF::Cards::PonyCard, "$name object is right type";
+            for %spec.keys -> $attr {
+                is _fetch-attribute-by-name($card, $attr), %spec{$attr}, "... extracted $attr";
+            }
         }
     },
 );

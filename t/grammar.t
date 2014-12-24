@@ -18,11 +18,14 @@ my %PONY-CARD-SPEC = (
 # format.
 sub _make_pony_card_string(Str :$typestr, *%pony-card-spec) {
     my %spec = (%PONY-CARD-SPEC, %pony-card-spec);
+
+    # Fix it down
     %spec<type> = 'START' if %spec<type> eq 'Start';
-    %spec<gender> = 'malefemale' if %spec<gender> eq 'MaleFemale';
+    %spec<gender> = 'malefemale' if ( %spec<gender> // '') eq 'MaleFemale';
     %spec<race> = 'earth pony' if %spec<race> eq 'EarthPony';
     %spec<kind> = (
-        %spec<gender race>:delete,
+        %spec<gender>:delete // (),
+        %spec<race>:delete,
         %spec<dystopian>:delete ?? 'Dystopian' !! ()
     ).join('!');
     %spec<keyword-list> = (%spec<keywords>:delete).join(', ');
@@ -42,7 +45,7 @@ sub _fetch-attribute-by-name (Any $obj, Str $name) {
 
 sub _parse-card-file (Str $contents) {
     my $match = TSSSF::Cards::Grammar.parse($contents, :actions(TSSSF::Cards::Actions.new()) );
-    die 'Parse error' unless $match;
+    die "Unable to parse\n$contents" unless $match;
     return $match.ast.flat;
 }
 
@@ -69,7 +72,11 @@ my %tests = (
                 race => 'Pegasus', gender => 'MaleFemale',
             },
             'Celestia' => {
-                race => 'Alicorn', keywords => ('Celestia', 'Elder', 'Princess'),
+                race => 'Alicorn', keywords => <Celestia Elder Princess>,
+            },
+            'earth pony changeling' => {
+                race => 'EarthPonyChangeling', gender => Any,
+                keywords => <Changeling>,
             },
         );
 

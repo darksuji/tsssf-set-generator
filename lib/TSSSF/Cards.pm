@@ -2,7 +2,7 @@ use v6;
 module TSSSF::Cards;
 
 my enum TSSSF::Cards::Gender <Male Female MaleFemale>;
-my enum TSSSF::Cards::Race <Unicorn Pegasus EarthPony Alicorn EarthPonyChangeling>;
+my enum TSSSF::Cards::Race <Unicorn Pegasus EarthPony Alicorn ChangelingEarthPony>;
 
 class TSSSF::Cards::Card {
     has Str $.filename;
@@ -58,7 +58,7 @@ grammar TSSSF::Cards::Grammar {
         :i Male | Female | MaleFemale
     }
     token race {
-        :i Unicorn | Pegasus | Earth' 'Pony | Alicorn | EarthPonyChangeling
+        :i Unicorn | Pegasus | Earth' 'Pony | Alicorn | ChangelingEarthPony
     }
     token dystopian-flag {
         \! Dystopian
@@ -127,8 +127,6 @@ class TSSSF::Cards::Actions {
         );
     }
     method gender($/) {
-        # FIXME:  enum coercion is broken in perl6.
-        # Once it's fixed, replace this lookup with the simpler mechanism.
         my %map = (
             male        => TSSSF::Cards::Gender::Male,
             female      => TSSSF::Cards::Gender::Female,
@@ -137,14 +135,12 @@ class TSSSF::Cards::Actions {
         make %map{lc $/};
     }
     method race($/) {
-        # FIXME:  enum coercion is broken in perl6.
-        # Once it's fixed, replace this lookup with the simpler mechanism.
         my %map = (
             unicorn             => TSSSF::Cards::Race::Unicorn,
             pegasus             => TSSSF::Cards::Race::Pegasus,
             'earth pony'        => TSSSF::Cards::Race::EarthPony,
             alicorn             => TSSSF::Cards::Race::Alicorn,
-            earthponychangeling => TSSSF::Cards::Race::EarthPonyChangeling,
+            changelingearthpony => TSSSF::Cards::Race::ChangelingEarthPony,
         );
         make %map{lc $/};
     }

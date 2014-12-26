@@ -36,8 +36,8 @@ sub clean-card-spec (%spec is copy) {
         when 'earth pony' {
             $_ = 'EarthPony';
         }
-        when 'earthponychangeling' {
-            $_ = 'EarthPonyChangeling';
+        when 'changelingearthpony' {
+            $_ = 'ChangelingEarthPony';
         }
     }
     if (%spec<dystopian> // '') eq 'Dystopian' {
@@ -82,7 +82,7 @@ my %tests = (
                 race => 'Alicorn', keywords => <Celestia Elder Princess>,
             },
             'earth pony changeling' => {
-                race => 'earthponychangeling', gender => Any,
+                race => 'changelingearthpony', gender => Any,
                 keywords => <Changeling>,
             },
         );

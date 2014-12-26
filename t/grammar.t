@@ -21,7 +21,7 @@ sub _make_pony_card_string(Str :$typestr, *%pony-card-spec) {
 
     # Fix it down
     %spec<type> = 'START' if %spec<type> eq 'Start';
-    %spec<gender> = 'malefemale' if ( %spec<gender> // '') eq 'MaleFemale';
+    %spec<gender> = 'malefemale' if (%spec<gender> // '') eq 'MaleFemale';
     %spec<race> = 'earth pony' if %spec<race> eq 'EarthPony';
     %spec<kind> = (
         %spec<gender>:delete // (),
@@ -34,13 +34,6 @@ sub _make_pony_card_string(Str :$typestr, *%pony-card-spec) {
         qq{%s`%s`%s`%s`%s`%s`%s`\n},
         %spec<type filename kind name keyword-list rules-text flavor-text>
     );
-}
-
-# FIXME This is a completely hideous way of saying $obj.$name()
-sub _fetch-attribute-by-name (Any $obj, Str $name) {
-    my $sub = $obj.^can($name)[0];
-    die "No such method \>$name\<" unless $sub;
-    return $sub($obj);
 }
 
 sub _parse-card-file (Str $contents) {
@@ -95,7 +88,8 @@ my %tests = (
             %spec<type>:delete;
 
             for %spec.keys -> $attr {
-                is _fetch-attribute-by-name($card, $attr), %spec{$attr}, "... extracted $attr";
+                next unless defined %spec{$attr};
+                is $card."$attr"(), %spec{$attr}, "... extracted $attr";
             }
         }
     },

@@ -2,7 +2,7 @@ use v6;
 module TSSSF::Cards;
 
 my enum TSSSF::Cards::Gender <Male Female MaleFemale>;
-my enum TSSSF::Cards::Race <Unicorn Pegasus EarthPony Alicorn>;
+my enum TSSSF::Cards::Race <Unicorn Pegasus EarthPony Alicorn EarthPonyChangeling>;
 
 class TSSSF::Cards::Card {
     has Str $.filename;
@@ -40,7 +40,7 @@ grammar TSSSF::Cards::Grammar {
     }
     token pony-card-body {
         <filename> \`
-        <gender> \!
+        [<gender> \!]?
         <race>
         <dystopian-flag>? \`
         <name> \`
@@ -58,7 +58,7 @@ grammar TSSSF::Cards::Grammar {
         :i Male | Female | MaleFemale
     }
     token race {
-        :i Unicorn | Pegasus | Earth' 'Pony | Alicorn
+        :i Unicorn | Pegasus | Earth' 'Pony | Alicorn | EarthPonyChangeling
     }
     token dystopian-flag {
         \! Dystopian
@@ -107,16 +107,19 @@ class TSSSF::Cards::Actions {
         );
     }
     method pony-card-body($/) {
-        make {
+        my %result = %(
             filename    => ~$<filename>,
-            gender      => $<gender>.ast,
             race        => $<race>.ast,
             dystopian   => $<dystopian-flag>.defined,
             name        => ~$<name>,
             keywords    => $<keywords>.ast,
             rules-text  => ~$<rules-text>,
             flavor-text => ~$<flavor-text>,
-        };
+        );
+        if ($<gender>) {
+            %result<gender> = $<gender>.ast;
+        }
+        make %result;
     }
     method start-card($/) {
         make TSSSF::Cards::StartCard.new(
@@ -137,10 +140,11 @@ class TSSSF::Cards::Actions {
         # FIXME:  enum coercion is broken in perl6.
         # Once it's fixed, replace this lookup with the simpler mechanism.
         my %map = (
-            unicorn         => TSSSF::Cards::Race::Unicorn,
-            pegasus         => TSSSF::Cards::Race::Pegasus,
-            'earth pony'    => TSSSF::Cards::Race::EarthPony,
-            alicorn         => TSSSF::Cards::Race::Alicorn,
+            unicorn             => TSSSF::Cards::Race::Unicorn,
+            pegasus             => TSSSF::Cards::Race::Pegasus,
+            'earth pony'        => TSSSF::Cards::Race::EarthPony,
+            alicorn             => TSSSF::Cards::Race::Alicorn,
+            earthponychangeling => TSSSF::Cards::Race::EarthPonyChangeling,
         );
         make %map{lc $/};
     }

@@ -2,7 +2,7 @@ use v6;
 module TSSSF::Cards;
 
 my enum TSSSF::Cards::Gender <Male Female MaleFemale>;
-my enum TSSSF::Cards::Race <Unicorn Pegasus EarthPony Alicorn ChangelingEarthPony>;
+my enum TSSSF::Cards::Race <Unicorn Pegasus EarthPony Alicorn ChangelingEarthPony ChangelingUnicorn>;
 
 class TSSSF::Cards::Card {
     has Str $.filename;
@@ -58,7 +58,7 @@ grammar TSSSF::Cards::Grammar {
         :i Male | Female | MaleFemale
     }
     token race {
-        :i Unicorn | Pegasus | Earth' 'Pony | Alicorn | ChangelingEarthPony
+        :i Unicorn | Pegasus | Earth' 'Pony | Alicorn | ChangelingEarthPony | ChangelingUnicorn
     }
     token dystopian-flag {
         \! Dystopian
@@ -141,6 +141,7 @@ class TSSSF::Cards::Actions {
             'earth pony'        => TSSSF::Cards::Race::EarthPony,
             alicorn             => TSSSF::Cards::Race::Alicorn,
             changelingearthpony => TSSSF::Cards::Race::ChangelingEarthPony,
+            changelingunicorn   => TSSSF::Cards::Race::ChangelingUnicorn,
         );
         make %map{lc $/};
     }

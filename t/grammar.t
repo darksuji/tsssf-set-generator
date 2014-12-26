@@ -39,7 +39,7 @@ sub clean-card-spec (%spec is copy) {
         when 'changelingearthpony' {
             $_ = 'ChangelingEarthPony';
         }
-        when 'changelingearthpony' {
+        when 'changelingunicorn' {
             $_ = 'ChangelingUnicorn';
         }
     }

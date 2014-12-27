@@ -7,9 +7,6 @@ my enum TSSSF::Cards::Gender (
     MaleFemale  => 'malefemale',
 );
 
-# FIXME - for some reason, compile-time-computed enums don't work, even when
-# using constants.  This means that we've got some ugly repetition here that we
-# can't get rid of and also use constants.
 my enum TSSSF::Cards::Race (
     EarthPony           => 'earth pony',
     Unicorn             => 'unicorn',
@@ -17,6 +14,7 @@ my enum TSSSF::Cards::Race (
     Pegasus             => 'pegasus',
     ChangelingEarthPony => 'changelingearthpony',
     ChangelingUnicorn   => 'changelingunicorn',
+    ChangelingPegasus   => 'changelingpegasus',
 );
 
 class TSSSF::Cards::Card {

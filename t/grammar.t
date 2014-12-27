@@ -5,26 +5,28 @@ use TSSSF::Cards;
 
 my %PONY-CARD-SPEC = (
     type        => 'Pony',
-    filename    => '00 START.png',
+    filename    => 'Pony - Perfectly Generic Object.png',
     gender      => 'Female',
     race        => 'Unicorn',
-    name        => 'Perfectly Generic Start Card',
+    name        => 'Perfectly Generic Object',
     keywords    => ('Object', 'Cube'),
-    rules-text  => q{If you don't know what to do with a start card,\nlook up the rules.},
+    rules-text  => q{This is a thing, not a Pony.},
     flavor-text => q{This\nis not\na real\ncard.},
 );
 
 sub make-pony-card-string(%spec is copy) {
-    %spec<kind> = (
+    %spec<icons> = (
         %spec<gender>:delete // (),
         %spec<race>:delete,
         %spec<dystopian>:delete // (),
     ).join('!');
     %spec<keywords> = (%spec<keywords>:delete).join(', ');
 
-    return %spec<
-        type filename kind name keywords rules-text flavor-text
-    >.join('`') ~ "`\n"; # note trailing `
+    return make-card-string(%spec);
+}
+
+sub make-card-string(%spec) {
+    return %spec<type filename icons name keywords rules-text flavor-text>.join("`") ~ "\`\n";
 }
 
 # Make a uniform card spec out of a messy one
@@ -123,8 +125,7 @@ my %tests = (
             flavor-text => q{Serendipity, that's what it was. "Mistake" is such an ugly word... - Magical Makeover},
         );
 
-        my $contents = %spec<type filename icons name keywords rules-text flavor-text>.join("`") ~ "\`\n";
-        my ($card) = parse-card-file($contents);
+        my ($card) = parse-card-file(make-card-string(%spec));
 
         cmp_ok $card, '~~', TSSSF::Cards::ShipCard, "ship card is right type";
         %spec<type>:delete;

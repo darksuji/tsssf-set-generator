@@ -15,6 +15,7 @@ my enum TSSSF::Cards::Race (
     ChangelingEarthPony => 'changelingearthpony',
     ChangelingUnicorn   => 'changelingunicorn',
     ChangelingPegasus   => 'changelingpegasus',
+    ChangelingAlicorn   => 'changelingalicorn',
 );
 
 class TSSSF::Cards::Card {

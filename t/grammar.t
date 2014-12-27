@@ -84,6 +84,10 @@ my %tests = (
                 race => 'changelingpegasus', gender => Any,
                 keywords => <Changeling Villain>,
             },
+            'Chrysalis' => {
+                race => 'changelingalicorn', gender => Any,
+                keywords => <Changeling Villain>,
+            },
         );
 
         for %card-specs.kv -> $name, %spec {

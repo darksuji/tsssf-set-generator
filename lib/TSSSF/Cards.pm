@@ -143,23 +143,10 @@ class TSSSF::Cards::Actions {
         );
     }
     method gender($/) {
-        my %map = (
-            male        => TSSSF::Cards::Gender::Male,
-            female      => TSSSF::Cards::Gender::Female,
-            malefemale  => TSSSF::Cards::Gender::MaleFemale,
-        );
-        make %map{lc $/};
+        make TSSSF::Cards::Gender(lc $/);
     }
     method race($/) {
-        my %map = (
-            unicorn             => TSSSF::Cards::Race::Unicorn,
-            pegasus             => TSSSF::Cards::Race::Pegasus,
-            'earth pony'        => TSSSF::Cards::Race::EarthPony,
-            alicorn             => TSSSF::Cards::Race::Alicorn,
-            changelingearthpony => TSSSF::Cards::Race::ChangelingEarthPony,
-            changelingunicorn   => TSSSF::Cards::Race::ChangelingUnicorn,
-        );
-        make %map{lc $/};
+        make TSSSF::Cards::Race(lc $/);
     }
     method keywords($/) {
         make $<keyword>».Str;

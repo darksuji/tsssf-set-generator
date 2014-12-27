@@ -1,8 +1,23 @@
 use v6;
 module TSSSF::Cards;
 
-my enum TSSSF::Cards::Gender <Male Female MaleFemale>;
-my enum TSSSF::Cards::Race <Unicorn Pegasus EarthPony Alicorn ChangelingEarthPony ChangelingUnicorn>;
+my enum TSSSF::Cards::Gender (
+    Male        => 'male',
+    Female      => 'female',
+    MaleFemale  => 'malefemale',
+);
+
+# FIXME - for some reason, compile-time-computed enums don't work, even when
+# using constants.  This means that we've got some ugly repetition here that we
+# can't get rid of and also use constants.
+my enum TSSSF::Cards::Race (
+    EarthPony           => 'earth pony',
+    Unicorn             => 'unicorn',
+    Alicorn             => 'alicorn',
+    Pegasus             => 'pegasus',
+    ChangelingEarthPony => 'changelingearthpony',
+    ChangelingUnicorn   => 'changelingunicorn',
+);
 
 class TSSSF::Cards::Card {
     has Str $.filename;
@@ -55,10 +70,11 @@ grammar TSSSF::Cards::Grammar {
         <- [`] >
     }
     token gender {
-        :i Male | Female | MaleFemale
+        :i :s <{ TSSSF::Cards::Gender.enums.values.join('|') }>
+#        :i Male | Female | MaleFemale
     }
     token race {
-        :i Unicorn | Pegasus | Earth' 'Pony | Alicorn | ChangelingEarthPony | ChangelingUnicorn
+        :i :s <{ TSSSF::Cards::Race.enums.values.join('|') }>
     }
     token dystopian-flag {
         \! Dystopian

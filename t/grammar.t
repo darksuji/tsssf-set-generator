@@ -32,22 +32,10 @@ sub clean-card-spec (%spec is copy) {
     if %spec<type> eq 'START' {
         %spec<type> = 'Start';
     }
-    given %spec<race> // '' {
-        when 'earth pony' {
-            $_ = 'EarthPony';
-        }
-        when 'changelingearthpony' {
-            $_ = 'ChangelingEarthPony';
-        }
-        when 'changelingunicorn' {
-            $_ = 'ChangelingUnicorn';
-        }
-    }
+    %spec<race> = lc %spec<race> if defined %spec<race>;
+    %spec<gender> = lc %spec<gender> if defined %spec<gender>;
     if (%spec<dystopian> // '') eq 'Dystopian' {
         %spec<dystopian> = True;
-    }
-    if (%spec<gender> // '') eq 'malefemale' {
-        %spec<gender> = 'MaleFemale';
     }
 
     return %spec;

@@ -42,16 +42,23 @@ class TSSSF::Cards::PonyCard is TSSSF::Cards::Card {
 class TSSSF::Cards::StartCard is TSSSF::Cards::PonyCard {
 }
 
+class TSSSF::Cards::ShipCard is TSSSF::Cards::PonyCard {
+    has Str $.icons;
+    has Str $.name;
+    has Str @.keywords;
+    has Str $.rules-text;
+    has Str $.flavor-text;
+}
+
 grammar TSSSF::Cards::Grammar {
     token TOP { [ <line> \n? ]+ }
     token line { ^^ <card> $$ }
-    token card { <generic-card> | <start-card> | <pony-card> }
+    token card { <generic-card> | <pony-card> | <start-card> | <ship-card> }
     token generic-card { Card \` <generic-card-body> }
-    token pony-card { Pony \` <pony-card-body> }
-    token start-card { START \` <pony-card-body> }
     token generic-card-body {
         <filename> \`
     }
+    token pony-card { Pony \` <pony-card-body> }
     token pony-card-body {
         <filename> \`
         [<gender> \!]?
@@ -70,7 +77,6 @@ grammar TSSSF::Cards::Grammar {
     }
     token gender {
         :i :s <{ TSSSF::Cards::Gender.enums.values.join('|') }>
-#        :i Male | Female | MaleFemale
     }
     token race {
         :i :s <{ TSSSF::Cards::Race.enums.values.join('|') }>
@@ -94,6 +100,19 @@ grammar TSSSF::Cards::Grammar {
     token flavor-text {
         <non-grave-accent>+
     }
+    token start-card { START \` <pony-card-body> }
+    token ship-card { Ship \` <ship-card-body> }
+    token ship-card-body {
+        <filename> \`
+        <icons> \`
+        <name> \`
+        <keywords> \`
+        <rules-text> \`
+        <flavor-text> \`
+    }
+    token icons {
+        <non-grave-accent>+
+    }
 }
 
 class TSSSF::Cards::Actions {
@@ -104,7 +123,7 @@ class TSSSF::Cards::Actions {
         make $<card>.ast;
     }
     method card($/) {
-        make ([//] $<generic-card>, $<pony-card>, $<start-card>).ast;
+        make ([//] $<generic-card>, $<pony-card>, $<start-card>, $<ship-card>).ast;
     }
     method generic-card($/) {
         make TSSSF::Cards::Card.new(
@@ -149,6 +168,21 @@ class TSSSF::Cards::Actions {
     }
     method keywords($/) {
         make $<keyword>».Str;
+    }
+    method ship-card($/) {
+        make TSSSF::Cards::ShipCard.new(
+            |$<ship-card-body>.ast
+        );
+    }
+    method ship-card-body($/) {
+        make %(
+            filename    => ~$<filename>,
+            icons       => ~$<icons>,
+            name        => ~$<name>,
+            keywords    => $<keywords>.ast,
+            rules-text  => ~$<rules-text>,
+            flavor-text => ~$<flavor-text>,
+        );
     }
 }
 # vim: set ft=perl6

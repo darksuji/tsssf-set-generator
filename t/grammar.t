@@ -59,8 +59,8 @@ my %tests = (
     },
     parses-pony-card-file   => sub {
         my %card-specs = (
-            'default' => { %PONY-CARD-SPEC },
-            'start' => {
+            default => { %PONY-CARD-SPEC },
+            start => {
                 type => 'START',
             },
             'male dystopian earth pony' => {
@@ -69,7 +69,7 @@ my %tests = (
             'male-and-female pegasus' => {
                 race => 'Pegasus', gender => 'malefemale',
             },
-            'Celestia' => {
+            Celestia => {
                 race => 'Alicorn', keywords => <Celestia Elder Princess>,
             },
             'earth pony changeling' => {
@@ -84,7 +84,7 @@ my %tests = (
                 race => 'changelingpegasus', gender => Any,
                 keywords => <Changeling Villain>,
             },
-            'Chrysalis' => {
+            Chrysalis => {
                 race => 'changelingalicorn', gender => 'female',
                 keywords => <Changeling Villain>,
             },
@@ -110,6 +110,27 @@ my %tests = (
                 next unless defined %clean-spec{$attr};
                 is $card."$attr"(), %clean-spec{$attr}, "... extracted $attr";
             }
+        }
+    },
+    parses-ship-card-file   => sub {
+        my %spec = (
+            type        => 'Ship',
+            filename    => q{Ship - So That's What That Does.png},
+            icons       => 'Ship',
+            name        => q{So THAT'S What That Does!},
+            keywords    => ('Race Change'),
+            rules-text  => q{When you attach this card to the grid, you may choose one pony card attached to this ship. Until the end of your turn, that pony card counts as a race of your choice. This cannot affect Changelings.},
+            flavor-text => q{Serendipity, that's what it was. "Mistake" is such an ugly word... - Magical Makeover},
+        );
+
+        my $contents = %spec<type filename icons name keywords rules-text flavor-text>.join("`") ~ "\`\n";
+        my ($card) = parse-card-file($contents);
+
+        cmp_ok $card, '~~', TSSSF::Cards::ShipCard, "ship card is right type";
+        %spec<type>:delete;
+
+        for %spec.kv -> $attr, $value {
+            is $card."$attr"(), $value, "... extracted $attr";
         }
     },
 );

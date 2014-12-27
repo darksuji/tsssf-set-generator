@@ -107,7 +107,7 @@ grammar TSSSF::Cards::Grammar {
         <icons> \`
         <name> \`
         <keywords> \`
-        <rules-text> \`
+        <rules-text>? \`
         <flavor-text> \`
     }
     token icons {
@@ -175,14 +175,17 @@ class TSSSF::Cards::Actions {
         );
     }
     method ship-card-body($/) {
-        make %(
+        my %result = %(
             filename    => ~$<filename>,
             icons       => ~$<icons>,
             name        => ~$<name>,
             keywords    => $<keywords>.ast,
-            rules-text  => ~$<rules-text>,
             flavor-text => ~$<flavor-text>,
         );
+        if ($<rules-text>) {
+            %result<rules-text> = ~$<rules-text>;
+        }
+        return %result;
     }
 }
 # vim: set ft=perl6

@@ -85,7 +85,7 @@ my %tests = (
                 keywords => <Changeling Villain>,
             },
             'Chrysalis' => {
-                race => 'changelingalicorn', gender => Any,
+                race => 'changelingalicorn', gender => 'female',
                 keywords => <Changeling Villain>,
             },
         );

@@ -3,15 +3,21 @@ use Test;
 
 use TSSSF::Cards;
 
+my %CARD-SPEC = (
+    type        => 'Card',
+    filename    => q{Perfectly Generic Object.png},
+    icons       => 'Card',
+    name        => q{Why do I not have a name?},
+    keywords    => ('Object'),
+    rules-text  => q{Make up your own rules!},
+    flavor-text => q{Tastes like paste.\n-- The Twilight Book of Vampires},
+);
+
 my %PONY-CARD-SPEC = (
+    %CARD-SPEC<filename name keywords rules-text flavor-text>:p,
     type        => 'Pony',
-    filename    => 'Pony - Perfectly Generic Object.png',
     gender      => 'Female',
     race        => 'Unicorn',
-    name        => 'Perfectly Generic Object',
-    keywords    => ('Object', 'Cube'),
-    rules-text  => q{This is a thing, not a Pony.},
-    flavor-text => q{This\nis not\na real\ncard.},
 );
 
 sub make-pony-card-string(%spec is copy) {
@@ -25,12 +31,12 @@ sub make-pony-card-string(%spec is copy) {
     return make-card-string(%spec);
 }
 
-sub make-card-string(%spec) {
-    return %spec<type filename icons name keywords rules-text flavor-text>.join("`") ~ "\`\n";
+sub make-card-string(%spec, Str $format="%s`%s`%s`%s`%s`%s`%s`\n") {
+    return sprintf($format, %spec<type filename icons name keywords rules-text flavor-text>);
 }
 
 sub make-card-string-without-terminal(%spec) {
-    return %spec<type filename icons name keywords rules-text flavor-text>.join("`") ~ "\n";
+    return make-card-string(%spec, "%s`%s`%s`%s`%s`%s`%s\n")
 }
 
 # Make a uniform card spec out of a messy one
@@ -119,46 +125,25 @@ my %tests = (
         }
     },
     parses-ship-card-file   => sub {
-        my %spec = (
-            type        => 'Ship',
-            filename    => q{Ship - So That's What That Does.png},
-            icons       => 'Ship',
-            name        => q{So THAT'S What That Does!},
-            keywords    => ('Race Change'),
-            rules-text  => q{When you attach this card to the grid, you may choose one pony card attached to this ship. Until the end of your turn, that pony card counts as a race of your choice. This cannot affect Changelings.},
-            flavor-text => q{Serendipity, that's what it was. "Mistake" is such an ugly word... - Magical Makeover},
-        );
-
+        my %spec = %(%CARD-SPEC, type => 'Ship');
         my ($card) = parse-card-file(make-card-string(%spec));
-
-        cmp_ok $card, '~~', TSSSF::Cards::ShipCard, "ship card is right type";
-        %spec<type>:delete;
-
-        for %spec.kv -> $attr, $value {
-            is $card."$attr"(), $value, "... extracted $attr";
-        }
+        card_ok($card, TSSSF::Cards::ShipCard, %spec);
     },
     parses-line-missing-terminal => sub {
-        my %spec = (
-            type        => 'Ship',
-            filename    => q{Ship - So That's What That Does.png},
-            icons       => 'Ship',
-            name        => q{So THAT'S What That Does!},
-            keywords    => ('Race Change'),
-            rules-text  => q{When you attach this card to the grid, you may choose one pony card attached to this ship. Until the end of your turn, that pony card counts as a race of your choice. This cannot affect Changelings.},
-            flavor-text => q{Serendipity, that's what it was. "Mistake" is such an ugly word... - Magical Makeover},
-        );
-
+        my %spec = %(%CARD-SPEC, type => 'Ship');
         my ($card) = parse-card-file(make-card-string-without-terminal(%spec));
-
-        cmp_ok $card, '~~', TSSSF::Cards::ShipCard, "ship card is right type";
-        %spec<type>:delete;
-
-        for %spec.kv -> $attr, $value {
-            is $card."$attr"(), $value, "... extracted $attr";
-        }
+        card_ok($card, TSSSF::Cards::ShipCard, %spec);
     },
 );
+
+sub card_ok(TSSSF::Cards::Card $card, $type, %spec) {
+    cmp_ok $card, '~~', $type, "ship card is right type";
+    %spec<type>:delete;
+
+    for %spec.kv -> $attr, $value {
+        is $card."$attr"(), $value, "... extracted $attr";
+    }
+}
 
 for %tests.kv -> $name, $test {
     diag $name;

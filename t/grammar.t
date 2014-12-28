@@ -1,0 +1,153 @@
+use v6;
+use Test;
+
+use TSSSF::Cards;
+
+my %CARD-SPEC = (
+    type        => 'Card',
+    filename    => q{Perfectly Generic Object.png},
+    icons       => 'Card',
+    name        => q{Why do I not have a name?},
+    keywords    => ('Object'),
+    rules-text  => q{Make up your own rules!},
+    flavor-text => q{Tastes like paste.\n-- The Twilight Book of Vampires},
+);
+
+my %PONY-CARD-SPEC = (
+    %CARD-SPEC<filename name keywords rules-text flavor-text>:p,
+    type        => 'Pony',
+    gender      => 'Female',
+    race        => 'Unicorn',
+);
+
+sub make-pony-card-string(%spec is copy) {
+    %spec<icons> = (
+        %spec<gender>:delete // (),
+        %spec<race>:delete,
+        %spec<dystopian>:delete // (),
+    ).join('!');
+    %spec<keywords> = (%spec<keywords>:delete).join(', ');
+
+    return make-card-string(%spec);
+}
+
+sub make-card-string(%spec, Str $format="%s`%s`%s`%s`%s`%s`%s`\n") {
+    return sprintf($format, %spec<type filename icons name keywords rules-text flavor-text>);
+}
+
+sub make-card-string-without-terminal(%spec) {
+    return make-card-string(%spec, "%s`%s`%s`%s`%s`%s`%s\n")
+}
+
+# Make a uniform card spec out of a messy one
+sub clean-card-spec (%spec is copy) {
+    if %spec<type> eq 'START' {
+        %spec<type> = 'Start';
+    }
+    %spec<race> = lc %spec<race> if defined %spec<race>;
+    %spec<gender> = lc %spec<gender> if defined %spec<gender>;
+    if (%spec<dystopian> // '') eq 'Dystopian' {
+        %spec<dystopian> = True;
+    }
+
+    return %spec;
+}
+
+sub parse-card-file (Str $contents) {
+    my $match = TSSSF::Cards::Grammar.parse($contents, :actions(TSSSF::Cards::Actions.new()) );
+    die "Unable to parse\n$contents" unless $match;
+    return $match.ast.flat;
+}
+
+my %tests = (
+    parses-generic-card-file   => sub {
+        my $filename = 'Card - Derpy Hooves.png';
+        my $contents = "Card`$filename`\n";
+
+        my ($card) = parse-card-file($contents);
+
+        cmp_ok $card, '~~', TSSSF::Cards::Card, "Derpy is right type";
+        is $card.filename, $filename, '... extracted filename';
+    },
+    parses-pony-card-file   => sub {
+        my %card-specs = (
+            default => { %PONY-CARD-SPEC },
+            start => {
+                type => 'START',
+            },
+            'male dystopian earth pony' => {
+                race => 'earth pony', gender => 'Male', dystopian => 'Dystopian',
+            },
+            'male-and-female pegasus' => {
+                race => 'Pegasus', gender => 'malefemale',
+            },
+            Celestia => {
+                race => 'Alicorn', keywords => <Celestia Elder Princess>,
+            },
+            'earth pony changeling' => {
+                race => 'changelingearthpony', gender => Any,
+                keywords => <Changeling Villain>,
+            },
+            'unicorn changeling' => {
+                race => 'changelingunicorn', gender => Any,
+                keywords => <Changeling Villain>,
+            },
+            'pegasus changeling' => {
+                race => 'changelingpegasus', gender => Any,
+                keywords => <Changeling Villain>,
+            },
+            Chrysalis => {
+                race => 'changelingalicorn', gender => 'female',
+                keywords => <Changeling Villain>,
+            },
+        );
+
+        for %card-specs.kv -> $name, %spec {
+            my %full-spec = (%PONY-CARD-SPEC, %spec);
+            my $contents = make-pony-card-string(%full-spec);
+            my %clean-spec = clean-card-spec(%full-spec);
+
+            my ($card) = parse-card-file($contents);
+
+            my $type;
+            if %clean-spec<type> eq 'Pony' {
+                $type = TSSSF::Cards::PonyCard;
+            } elsif %clean-spec<type> eq 'Start' {
+                $type = TSSSF::Cards::StartCard;
+            } else {
+                die "Unrecognized card type %clean-spec<type>";
+            }
+            card_ok($card, $type, %clean-spec, $name, attrs => %spec.keys);
+        }
+    },
+    parses-ship-card-file   => sub {
+        my %spec = %(%CARD-SPEC, type => 'Ship');
+        my ($card) = parse-card-file(make-card-string(%spec));
+        card_ok($card, TSSSF::Cards::ShipCard, %spec);
+    },
+    parses-line-missing-terminal => sub {
+        my %spec = %(%CARD-SPEC, type => 'Ship');
+        my ($card) = parse-card-file(make-card-string-without-terminal(%spec));
+        card_ok($card, TSSSF::Cards::ShipCard, %spec);
+    },
+);
+
+sub card_ok(TSSSF::Cards::Card $card, $type, %spec, $name?, :@attrs is copy) {
+    my $desc = (defined $name ?? "$name card" !! "card");
+    cmp_ok $card, '~~', $type, "$desc card is right type";
+    %spec<type>:delete;
+
+    @attrs ||= %spec.keys;
+    for @attrs -> $attr {
+        next unless defined %spec{$attr};
+        is $card."$attr"(), %spec{$attr}, "... extracted $attr";
+    }
+}
+
+for %tests.kv -> $name, $test {
+    diag $name;
+    $test();
+}
+
+done;
+# vim: set ft=perl6

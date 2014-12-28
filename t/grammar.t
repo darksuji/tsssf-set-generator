@@ -109,19 +109,15 @@ my %tests = (
 
             my ($card) = parse-card-file($contents);
 
+            my $type;
             if %clean-spec<type> eq 'Pony' {
-                cmp_ok $card, '~~', TSSSF::Cards::PonyCard, "$name object is right type";
+                $type = TSSSF::Cards::PonyCard;
             } elsif %clean-spec<type> eq 'Start' {
-                cmp_ok $card, '~~', TSSSF::Cards::StartCard, "$name object is right type";
+                $type = TSSSF::Cards::StartCard;
             } else {
                 die "Unrecognized card type %clean-spec<type>";
             }
-            %spec<type>:delete;
-
-            for %spec.keys -> $attr {
-                next unless defined %clean-spec{$attr};
-                is $card."$attr"(), %clean-spec{$attr}, "... extracted $attr";
-            }
+            card_ok($card, $type, %clean-spec, $name, attrs => %spec.keys);
         }
     },
     parses-ship-card-file   => sub {
@@ -136,12 +132,15 @@ my %tests = (
     },
 );
 
-sub card_ok(TSSSF::Cards::Card $card, $type, %spec, @attrs?) {
-    cmp_ok $card, '~~', $type, "ship card is right type";
+sub card_ok(TSSSF::Cards::Card $card, $type, %spec, $name?, :@attrs is copy) {
+    my $desc = (defined $name ?? "$name card" !! "card");
+    cmp_ok $card, '~~', $type, "$desc card is right type";
     %spec<type>:delete;
 
-    for %spec.kv -> $attr, $value {
-        is $card."$attr"(), $value, "... extracted $attr";
+    @attrs ||= %spec.keys;
+    for @attrs -> $attr {
+        next unless defined %spec{$attr};
+        is $card."$attr"(), %spec{$attr}, "... extracted $attr";
     }
 }
 

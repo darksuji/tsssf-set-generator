@@ -136,7 +136,7 @@ my %tests = (
     },
 );
 
-sub card_ok(TSSSF::Cards::Card $card, $type, %spec) {
+sub card_ok(TSSSF::Cards::Card $card, $type, %spec, @attrs?) {
     cmp_ok $card, '~~', $type, "ship card is right type";
     %spec<type>:delete;
 

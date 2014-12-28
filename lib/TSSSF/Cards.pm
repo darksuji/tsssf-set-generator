@@ -52,11 +52,11 @@ class TSSSF::Cards::ShipCard is TSSSF::Cards::Card {
 
 grammar TSSSF::Cards::Grammar {
     token TOP { [ <line> \n? ]+ }
-    token line { ^^ <card> $$ }
+    token line { ^^ <card> \`? $$ }
     token card { <generic-card> | <pony-card> | <start-card> | <ship-card> }
     token generic-card { Card \` <generic-card-body> }
     token generic-card-body {
-        <filename> \`
+        <filename>
     }
     token pony-card { Pony \` <pony-card-body> }
     token pony-card-body {
@@ -67,14 +67,10 @@ grammar TSSSF::Cards::Grammar {
         <name> \`
         <keywords> \`
         <rules-text> \`
-        <flavor-text> \`
+        <flavor-text>
     }
-    token filename {
-        <non-grave-accent>+
-    }
-    token non-grave-accent {
-        <- [`] >
-    }
+    token filename { <text> }
+    token text { <- [`\n] >+ }
     token gender {
         :i :s <{ TSSSF::Cards::Gender.enums.values.join('|') }>
     }
@@ -85,21 +81,13 @@ grammar TSSSF::Cards::Grammar {
         \! Dystopian
     }
 
-    token name {
-        <non-grave-accent>+
-    }
+    token name { <text> }
     token keywords {
         [ [ <keyword>\,\s* ]* <keyword> ]?
     }
-    token keyword {
-        <- [`,] >+
-    }
-    token rules-text {
-        <non-grave-accent>+
-    }
-    token flavor-text {
-        <non-grave-accent>+
-    }
+    token keyword { <- [`,] >+ }
+    token rules-text { <text> }
+    token flavor-text { <text> }
     token start-card { START \` <pony-card-body> }
     token ship-card { Ship \` <ship-card-body> }
     token ship-card-body {
@@ -108,11 +96,9 @@ grammar TSSSF::Cards::Grammar {
         <name> \`
         <keywords> \`
         <rules-text>? \`
-        <flavor-text> \`
+        <flavor-text>
     }
-    token icons {
-        <non-grave-accent>+
-    }
+    token icons { <text> }
 }
 
 class TSSSF::Cards::Actions {

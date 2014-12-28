@@ -42,7 +42,7 @@ class TSSSF::Cards::PonyCard is TSSSF::Cards::Card {
 class TSSSF::Cards::StartCard is TSSSF::Cards::PonyCard {
 }
 
-class TSSSF::Cards::ShipCard is TSSSF::Cards::PonyCard {
+class TSSSF::Cards::ShipCard is TSSSF::Cards::Card {
     has Str $.icons;
     has Str $.name;
     has Str @.keywords;
@@ -185,7 +185,7 @@ class TSSSF::Cards::Actions {
         if ($<rules-text>) {
             %result<rules-text> = ~$<rules-text>;
         }
-        return %result;
+        make %result;
     }
 }
 # vim: set ft=perl6
